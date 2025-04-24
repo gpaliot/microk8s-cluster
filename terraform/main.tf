@@ -52,22 +52,7 @@ resource "proxmox_vm_qemu" "microk8s_node" {
 
   ipconfig0 = "ip=dhcp"
 
-  provisioner "remote-exec" {
-    inline = [
-      "sudo snap install microk8s --classic",
-      "sudo usermod -a -G microk8s ubuntu",
-      "sudo chown -f -R ubuntu ~/.kube",
-      "sudo ufw allow from 10.0.0.0/8 to any port 16443 proto tcp",
-      "sudo ufw enable"
-    ]
-
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = var.ssh_private_key
-      host        = self.ssh_host
-    }
-  }
+  agent = 1
 
   lifecycle {
     ignore_changes = [network]
