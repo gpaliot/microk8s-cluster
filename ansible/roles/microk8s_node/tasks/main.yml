@@ -1,0 +1,3 @@
+---
+- name: Include master or worker task
+  include_tasks: "{{ 'master.yml' if inventory_hostname == groups['master'][0] else 'worker.yml' }}"

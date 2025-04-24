@@ -1,0 +1,60 @@
+name: Deploy MicroK8s Cluster
+
+on:
+  push:
+    paths:
+      - terraform/**
+      - ansible/**
+      - .github/workflows/deploy-microk8s.yml
+
+jobs:
+  deploy:
+    name: Provision and Configure Cluster
+    runs-on: ubuntu-latest
+
+    env:
+      TF_VAR_pm_api_url: ${{ secrets.PM_API_URL }}
+      TF_VAR_pm_user: ${{ secrets.PM_USER }}
+      TF_VAR_pm_password: ${{ secrets.PM_PASSWORD }}
+      TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+      TF_VAR_ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: terraform apply -auto-approve
+
+      - name: Extract IPs from Terraform Output
+        id: tf_output
+        working-directory: terraform
+        run: |
+          terraform output -json node_ips > node_ips.json
+          jq -r '.[]' node_ips.json > ../ansible/inventory/hosts
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Ansible
+        run: |
+          pip install ansible
+
+      - name: Run Ansible Playbook
+        working-directory: ansible
+        run: |
+          ansible-playbook -i inventory/hosts site.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"

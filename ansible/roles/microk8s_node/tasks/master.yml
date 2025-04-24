@@ -1,0 +1,39 @@
+---
+- name: Install MicroK8s
+  become: true
+  snap:
+    name: microk8s
+    classic: yes
+    state: present
+
+- name: Add user to microk8s group
+  become: true
+  user:
+    name: "{{ ansible_user }}"
+    groups: microk8s
+    append: yes
+
+- name: Enable firewall and allow MicroK8s API
+  become: true
+  ufw:
+    rule: allow
+    port: '16443'
+    proto: tcp
+    from_ip: '10.0.0.0/8'
+
+- name: Enable UFW
+  become: true
+  ufw:
+    state: enabled
+
+- name: Generate join command
+  become: true
+  shell: microk8s add-node | grep "microk8s join" > /tmp/join_command.sh
+  register: join_cmd
+  changed_when: "'join' in join_cmd.stdout"
+
+- name: Fetch join command to control node
+  fetch:
+    src: /tmp/join_command.sh
+    dest: join_command.sh
+    flat: yes

@@ -1,0 +1,24 @@
+---
+- name: Install MicroK8s
+  become: true
+  snap:
+    name: microk8s
+    classic: yes
+    state: present
+
+- name: Add user to microk8s group
+  become: true
+  user:
+    name: "{{ ansible_user }}"
+    groups: microk8s
+    append: yes
+
+- name: Copy join command from controller
+  copy:
+    src: join_command.sh
+    dest: /tmp/join_command.sh
+    mode: '0700'
+
+- name: Join MicroK8s cluster
+  become: true
+  shell: bash /tmp/join_command.sh
