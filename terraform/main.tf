@@ -31,7 +31,7 @@ variable "network_bridge" {
 resource "proxmox_vm_qemu" "microk8s_node" {
   count       = var.node_count
   name        = "microk8s-node-${count.index + 1}"
-  target_node = "proxmox"
+  target_node = "pve"
   clone       = var.vm_template
 
   cores       = 2
