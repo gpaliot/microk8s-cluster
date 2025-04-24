@@ -1,3 +1,4 @@
+# Trigger action
 terraform {
   required_providers {
     proxmox = {
